@@ -1,0 +1,8 @@
+data/*
+results/best_params/*
+results/tokens/*
+results/binarizer/*
+results/models/*
+results/confussion_matrix/*
+results/architecture/*
+results/plots/*

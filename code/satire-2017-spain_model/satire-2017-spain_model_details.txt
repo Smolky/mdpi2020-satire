@@ -1,0 +1,10 @@
+experiment_name,satire-2017-spain
+random_method,uniform_mersenne
+reduction_method,
+reduction_interval,50
+reduction_window,20
+reduction_threshold,0.2
+reduction_metric,val_loss
+complete_time,09/28/20/06:34
+x_shape,"(3856, 100)"
+y_shape,"(3856, 1)"
