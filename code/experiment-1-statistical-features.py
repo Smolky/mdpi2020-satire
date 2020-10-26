@@ -50,9 +50,13 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+
 
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.feature_selection import SelectKBest
+
 
 
 # Parser
@@ -130,8 +134,10 @@ for key, umucorpus_ids in config.ids[args.dataset].items ():
     # Classifier to evaluate
     rf_classifier = RandomForestClassifier (bootstrap=False, max_features='auto', min_samples_leaf=2, min_samples_split=2)
     svm_classifier = SVC ()
-    lr_classifier = LogisticRegression ()
+    lr_classifier = LogisticRegression (random_state=seed_value)
     mnb_classifier = MultinomialNB ()
+    k_classifier = KNeighborsClassifier (n_neighbors = 2)
+    j48_classifier = DecisionTreeClassifier ()
 
     
     
@@ -157,7 +163,6 @@ for key, umucorpus_ids in config.ids[args.dataset].items ():
     features_options = {
         'features__min_df': [0.01, 0.1, 1],
         'features__sublinear_tf': [True, False],
-        'features__ngram_range': [(1, 1), (1, 2), (1, 3)],
         'features__strip_accents': [None, 'unicode'],
         'features__use_idf': [True, False],
     }
@@ -167,7 +172,8 @@ for key, umucorpus_ids in config.ids[args.dataset].items ():
         'rf__max_depth': [10, 100, 200],
         'svm__C': [1],
         'svm__kernel': ['rbf', 'poly', 'linear'],
-        # 'lr__solver' : ['liblinear']
+        'lr__solver': ['liblinear', 'lbfgs'],
+        'lr__fit_intercept': [True, False],
     }
 
     
@@ -185,33 +191,46 @@ for key, umucorpus_ids in config.ids[args.dataset].items ():
     
     
     # Mix the specific and generic parameters for the character n-grams and the word-grams
-    bag_of_words_features.update (features_options)
-    character_n_grams_features.update (features_options)
+    bag_of_words_features = {**bag_of_words_features, **features_options}
+    character_n_grams_features = {**character_n_grams_features, **features_options}
     
-    
+     
+    # Mix the features with the classifier parameters
     bag_of_words_features['classifier__selected_model'] = pipe.named_steps['classifier'].generate (classifier_hypermateters)
     character_n_grams_features['classifier__selected_model'] = pipe.named_steps['classifier'].generate (classifier_hypermateters)
-
     
     
     # Parameters of pipelines can be set using ‘__’ separated parameter names:
     param_grid = [bag_of_words_features, character_n_grams_features]
-
+    
     
     # Search space
-    search = RandomizedSearchCV (pipe, param_grid, n_jobs=-1, cv=10, n_iter=2, verbose=1, random_state=seed_value)
+    search = RandomizedSearchCV (pipe, param_grid, n_jobs=32, cv=10, n_iter=5000, verbose=1, random_state=seed_value)
     
     
     # Fit over training data
     search.fit (sentences_features_train, sentences_labels_train)
     
     
-    print ("Best parameter (CV score=%0.3f):" % search.best_score_)
-    print (search.best_params_)
+    print ("All scores")
+    pp.pprint (search.cv_results_)
+    
+    df_summary = pd.DataFrame (search.cv_results_)
+    df_summary.to_csv ('../results/best_params/params-' + key + '-exp-1.csv')
+    
+    
+    pp.pprint ("Best parameter (CV score=%0.3f):" % search.best_score_)
+    print ("Best parameters")
+    pp.pprint (search.best_params_)
     
     
     # Score
-    # print (search.cv_results_)
-    # print (search.score (sentences_features_val, sentences_labels_val))
+    print ("Average accuracy")
+    pp.pprint (search.score (sentences_features_val, sentences_labels_val))
+    
+    
+    # Classification report
+    print ("Classification report")
+    print (classification_report (search.best_estimator_.predict (sentences_features_val), sentences_labels_val, target_names=['satire', 'non-satire']))
 
     

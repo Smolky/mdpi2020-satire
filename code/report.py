@@ -36,7 +36,7 @@ maxlen = 100
 
 
 # Parser
-parser = argparse.ArgumentParser (description='Evaluate hyperparameters.')
+parser = argparse.ArgumentParser (description='Report.')
 parser.add_argument ('--dataset', dest='dataset', default='satire-2017', help='satire-2017-spain|satire-2017-mexico|satire-2017')
 
 args = parser.parse_args ()
@@ -46,15 +46,16 @@ print (args.dataset)
 # @package Talos restored package
 package = ta.Restore ("satire-2017-spain_model.zip")
 
-"""
+
 print (package.details)
-print (package.model)
-print (package.params)
+# print (package.model)
 print (package.results)
+"""
+
 print (package.x)
 print (package.y)
 """
-
+sys.exit ()
 
 # @var umucorpus_ids int|string The Corpus IDs
 for key, umucorpus_ids in config.ids[args.dataset].items ():

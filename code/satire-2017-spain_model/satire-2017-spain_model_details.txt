@@ -5,6 +5,6 @@ reduction_interval,50
 reduction_window,20
 reduction_threshold,0.2
 reduction_metric,val_loss
-complete_time,09/28/20/06:34
+complete_time,10/22/20/04:11
 x_shape,"(3856, 100)"
 y_shape,"(3856, 1)"

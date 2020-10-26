@@ -22,7 +22,7 @@ lb = LabelBinarizer ()
 
 
 # Read best parameters and results
-df = pd.read_pickle ('../results/best_params/params-satire-2017-spain.pkl')
+df = pd.read_pickle ('../results/best_params/params-satire-2017.pkl')
 
 
 # Configure panda according to the shape
@@ -36,6 +36,7 @@ df = df.drop ('epochs', axis=1)
 df = df.drop ('round_epochs', axis=1)
 df = df.drop ('optimizer', axis=1)
 df = df.drop ('loss', axis=1)
+df = df.drop ('maxlen', axis=1)
 df = df.drop ('accuracy', axis=1)
  
 
@@ -53,6 +54,8 @@ pd.set_option ('display.width', 1000)
 
 # To calculate the best parameters
 print (df.sort_values(by=['val_accuracy']).tail(10))
+print (df.sort_values(by=['val_accuracy']).head(10))
+df.to_csv ('dp-satire-2017.csv')
 sys.exit ()
 
 
@@ -71,10 +74,11 @@ lb.fit (['gru', 'bilstm', 'cnn'])
 df = pd.get_dummies (df, columns=['word_embeddings_architecture'])
 
 lb = LabelBinarizer ()
-lb.fit (['word2vec', 'suc', 'gloVe', 'fastText'])
+# lb.fit (['none', 'word2vec', 'suc', 'gloVe', 'fastText'])
+lb.fit (['custom-word2vec', 'custom-glove', 'custom-fasttext'])
 df = pd.get_dummies (df, columns=['embedding_matrix'])
-print (df)
-sys.exit ()
+# print (df)
+# sys.exit ()
 
 
 # Rename the binazied columns
@@ -86,10 +90,9 @@ df.rename (columns={
 }, inplace=True)
 
 df.rename (columns={
-    'embedding_matrix_word2vec': 'word2vec', 
-    'embedding_matrix_suc': 'suc',
-    'embedding_matrix_gloVe': 'gloVe',
-    'embedding_matrix_fastText': 'fastText',
+    'embedding_matrix_custom-word2vec': 'custom_word2vec', 
+    'embedding_matrix_custom-glove': 'custom_glove',
+    'embedding_matrix_custom-fasttext': 'custom_fasttext',
 }, inplace=True)
 
 
@@ -127,7 +130,7 @@ df['order'] = df.apply (lambda row: order(row), axis=1)
 
 
 # Reassign order
-df = df[['title', 'order', 'bilstm', 'cnn', 'gru', 'dense', 'fastText', 'gloVe', 'suc', 'word2vec', 'val_loss', 'val_accuracy']]
+df = df[['first_neuron', 'activation', 'batch_size', 'dropout', 'lr', 'number_of_layers', 'reduce_dim', 'trainable', 'title', 'val_accuracy', 'order', 'custom_word2vec', 'custom_glove', 'custom_fasttext']]
 
 
 # Sort values
@@ -137,34 +140,26 @@ df = df.sort_values (by='order', ascending=True)
 
 df.drop(df.loc[df['title']=='delete'].index, inplace=True)
 
+# df =  df.query('suc=="1" ')
 
 
 tables = [
-    df.query('suc=="1"'),
-    df.query('word2vec=="1"'),
-    df.query('gloVe=="1" '),
-    df.query('fastText=="1" ')
+    df.query('custom_word2vec=="1"'),
+    df.query('custom_glove=="1" '),
+    df.query('custom_fasttext=="1" ')
 ]
 
 for table in tables:
-    table = table.drop ('order', axis=1)
-    table = table.drop ('suc', axis=1)
-    table = table.drop ('word2vec', axis=1)
-    table = table.drop ('gloVe', axis=1)
-    table = table.drop ('fastText', axis=1)
-    table = table.drop ('cnn', axis=1)
-    table = table.drop ('gru', axis=1)
-    table = table.drop ('bilstm', axis=1)
-    table = table.drop ('dense', axis=1)
-    table = table.drop ('embeddings', axis=1)
-    table = table.drop ('both', axis=1)
-    
     print (table.to_csv(index=False))
 
 # print (df.query('gru=="1" & fastText=="1" ').to_csv(index=False))
 
 
 
+"""
+df = df.drop ('order', axis=1)
+df = df.drop ('suc', axis=1)
 
 sns.heatmap (df.corr (), annot=True)
 plt.show ()
+"""
